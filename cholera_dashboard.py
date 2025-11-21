@@ -5,39 +5,27 @@ from folium.plugins import MarkerCluster
 from branca.element import Template, MacroElement
 from streamlit_folium import st_folium
 
-# ------------------------------
-# 1. STREAMLIT PAGE CONFIG
-# ------------------------------
 st.set_page_config(page_title="Cholera Death Map", layout="wide")
 st.title("Cholera Death Dashboard")
 
-# ------------------------------
-# 2. LOAD CSV DATA
-# ------------------------------
+# Load CSV data
 gdf_deaths = pd.read_csv("Cholera_Deaths.csv")
 gdf_pumps = pd.read_csv("Pumps.csv")
 
-# ------------------------------
-# SUMMARY STATISTICS
-# ------------------------------
+# Summary statistics
 total_deaths = len(gdf_deaths)
-# Count deaths at same location
 death_counts = gdf_deaths.groupby(["X","Y"]).size()
 max_death_same_location = death_counts.max()
 
 st.metric("Total Cholera Deaths", total_deaths)
 st.metric("Maximum Deaths at One Location", int(max_death_same_location))
 
-# ------------------------------
-# 3. CREATE BASE MAP
-# ------------------------------
+# Create map
 center_lat = gdf_deaths["Y"].mean()
 center_lon = gdf_deaths["X"].mean()
 m = folium.Map(location=[center_lat, center_lon], zoom_start=16)
 
-# ------------------------------
-# 4. ADD CHOLERA DEATHS
-# ------------------------------
+# Add cholera deaths
 deaths_layer = folium.FeatureGroup(name="Cholera Deaths")
 for _, row in gdf_deaths.iterrows():
     folium.CircleMarker(
@@ -49,9 +37,7 @@ for _, row in gdf_deaths.iterrows():
     ).add_to(deaths_layer)
 deaths_layer.add_to(m)
 
-# ------------------------------
-# 5. ADD WATER PUMPS
-# ------------------------------
+# Add water pumps
 pumps_layer = folium.FeatureGroup(name="Water Pumps")
 for _, row in gdf_pumps.iterrows():
     folium.Marker(
@@ -61,17 +47,12 @@ for _, row in gdf_pumps.iterrows():
     ).add_to(pumps_layer)
 pumps_layer.add_to(m)
 
-# ------------------------------
-# 6. LAYER CONTROL
-# ------------------------------
+# Layer control
 folium.LayerControl().add_to(m)
 
-# ------------------------------
-# 7. TITLE + LEGEND
-# ------------------------------
+# Title & legend
 template = """
 {% macro html(this, kwargs) %}
-
 <div style="
     position: fixed;
     top: 10px;
@@ -87,7 +68,6 @@ template = """
     ">
     CHOLERA DEATH MAP
 </div>
-
 <div style="
     position: fixed;
     bottom: 50px;
@@ -102,15 +82,12 @@ template = """
     <i class="fa fa-circle" style="color:red;"></i> Cholera Deaths<br>
     <i class="fa fa-tint" style="color:blue;"></i> Water Pumps
 </div>
-
 {% endmacro %}
 """
 macro = MacroElement()
 macro._template = Template(template)
 m.get_root().add_child(macro)
 
-# ------------------------------
-# 8. DISPLAY MAP
-# ------------------------------
+# Display map
 st.subheader("Interactive Cholera Map")
 st_folium(m, width=1000, height=600)
